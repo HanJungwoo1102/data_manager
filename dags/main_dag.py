@@ -1,27 +1,25 @@
-from datetime import datetime, timedelta
+import pendulum
+
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
+from airflow.operators.python import PythonOperator
 
-default_args={
-    'owner': 'airflow',
-}
+with DAG(
+    dag_id="jungwoohan_hihi",
+    schedule_interval=None,
+    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    catchup=False,
+    tags=["example"],
+) as dag:
 
-dag = DAG(
-    "jungwoohan_dag",
-    description='My first tutorial bash DAG',
-    default_args=default_args,
-)
+    def print_array():
+        """Print Numpy array."""
+        # import numpy as np  # <- THIS IS HOW NUMPY SHOULD BE IMPORTED IN THIS CASE
+        a = ['hello hsjfdsjdlfl sdkjflksdjfkskfs sdkjfkls hanjungwoo hanjungwoo lgcns']
+        # a = np.arange(15).reshape(3, 5)
+        print(a)
+        return a
 
-t1 = BashOperator(
-    task_id='say_hello',
-    bash_command='echo "hello world"',
-    dag=dag
-)
-
-t2 = BashOperator(
-    task_id='what_time',
-    bash_command='date',
-    dag=dag
-)
-
-t1 >> t2
+    run_this = PythonOperator(
+        task_id="print_the_context",
+        python_callable=print_array,
+    )
