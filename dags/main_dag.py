@@ -1,25 +1,30 @@
-import pendulum
-
-from airflow import DAG
+import os
+from datetime import datetime
+from airflow.models import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+
+def task_s3_log_load():
+    hook = S3Hook(aws_conn_id='aws_default')
+
+    # Get list of objects on a bucket
+    keys = hook.list_keys('jungwoohan-temp-source-bucket')
+
+    for key in keys:
+        print(key)
+
+        obj = hook.get_key(key, 'jungwoohan-temp-source-bucket')
+
+        print(obj.bucket_name, obj.key)
 
 with DAG(
-    dag_id="jungwoohan_hihi",
-    schedule_interval=None,
-    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
-    catchup=False,
-    tags=["example"],
+    dag_id='main',
+    schedule_interval='@daily',
+    start_date=datetime(2022, 3, 1),
+    catchup=False
 ) as dag:
-
-    def print_array():
-        """Print Numpy array."""
-        # import numpy as np  # <- THIS IS HOW NUMPY SHOULD BE IMPORTED IN THIS CASE
-        a = ['hello hsjfdsjdlfl sdkjflksdjfkskfs sdkjfkls hanjungwoo hanjungwoo lgcns']
-        # a = np.arange(15).reshape(3, 5)
-        print(a)
-        return a
-
-    run_this = PythonOperator(
-        task_id="print_the_context",
-        python_callable=print_array,
+    task_1 = PythonOperator(
+        task_id='s3_analysis',
+        python_callable=task_s3_log_load,
+        dag=dag
     )
