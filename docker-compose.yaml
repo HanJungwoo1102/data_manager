@@ -59,6 +59,7 @@ x-airflow-common:
     AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    AIRFLOW_CONN_AWS_DEFAULT: aws://${AWS_ACCESS_KEY}:${AWS_SECRET_KEY_1}%2${AWS_SECRET_KEY_2}@
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
