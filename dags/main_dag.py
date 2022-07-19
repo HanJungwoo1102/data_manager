@@ -5,19 +5,20 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 AWS_CONN_ID = 'aws_default'
-BUCKET_NAME = 'jungwoohan-temp-source-bucket'
+SOURCE_BUCKET_NAME = 'jungwoohan-temp-source-bucket'
 FILE_NAME = 'temp.csv'
+TARGET_BUCKET_NAME = 'jungwoohan-l0-bucket'
 
 def task_s3_log_load():
     hook = S3Hook(aws_conn_id=AWS_CONN_ID)
 
     # Get list of objects on a bucket
-    keys = hook.list_keys(BUCKET_NAME)
+    keys = hook.list_keys(SOURCE_BUCKET_NAME)
 
     for key in keys:
         print(key)
 
-        obj = hook.get_key(key, BUCKET_NAME)
+        obj = hook.get_key(key, SOURCE_BUCKET_NAME)
 
         print(obj.bucket_name, obj.key)
 
@@ -30,6 +31,10 @@ def rename_file(ti, new_name: str) -> None:
     downloaded_file_name = ti.xcom_pull(task_ids=['download_from_s3'])
     downloaded_file_path = '/'.join(downloaded_file_name[0].split('/')[:-1])
     os.rename(src=downloaded_file_name[0], dst=f"{downloaded_file_path}/{new_name}")
+
+def upload_to_s3(filename: str, key: str, bucket_name: str) -> None:
+    hook = S3Hook(aws_conn_id=AWS_CONN_ID)
+    hook.load_file(filename=filename, key=key, bucket_name=bucket_name)
 
 with DAG(
     dag_id='main',
@@ -49,7 +54,7 @@ with DAG(
         python_callable=download_from_s3,
         op_kwargs={
             'key': FILE_NAME,
-            'bucket_name': BUCKET_NAME,
+            'bucket_name': SOURCE_BUCKET_NAME,
             'local_path': './'
         }
     )
@@ -63,4 +68,15 @@ with DAG(
         }
     )
 
-    task_1 >> task_download_from_s3 >> task_rename_file
+    # Upload the file
+    task_upload_to_s3 = PythonOperator(
+        task_id='upload_to_s3',
+        python_callable=upload_to_s3,
+        op_kwargs={
+            'filename': f'./${FILE_NAME}',
+            'key': FILE_NAME,
+            'bucket_name': TARGET_BUCKET_NAME
+        }
+    )
+
+    task_1 >> task_download_from_s3 >> task_rename_file >> task_upload_to_s3
