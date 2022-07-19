@@ -11,15 +11,10 @@ TARGET_BUCKET_NAME = 'jungwoohan-l0-bucket'
 
 def task_s3_log_load():
     hook = S3Hook(aws_conn_id=AWS_CONN_ID)
-
-    # Get list of objects on a bucket
     keys = hook.list_keys(SOURCE_BUCKET_NAME)
-
     for key in keys:
         print(key)
-
         obj = hook.get_key(key, SOURCE_BUCKET_NAME)
-
         print(obj.bucket_name, obj.key)
 
 def download_from_s3(key: str, bucket_name: str, local_path: str) -> str:
@@ -42,12 +37,6 @@ with DAG(
     start_date=datetime(2022, 3, 1),
     catchup=False
 ) as dag:
-    task_1 = PythonOperator(
-        task_id='s3_analysis',
-        python_callable=task_s3_log_load,
-        dag=dag
-    )
-
     # Download a file
     task_download_from_s3 = PythonOperator(
         task_id='download_from_s3',
@@ -79,4 +68,4 @@ with DAG(
         }
     )
 
-    task_1 >> task_download_from_s3 >> task_rename_file >> task_upload_to_s3
+    task_download_from_s3 >> task_rename_file >> task_upload_to_s3
