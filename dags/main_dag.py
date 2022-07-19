@@ -73,7 +73,7 @@ with DAG(
         task_id='upload_to_s3',
         python_callable=upload_to_s3,
         op_kwargs={
-            'filename': f'./${FILE_NAME}',
+            'filename': f'./{FILE_NAME}',
             'key': FILE_NAME,
             'bucket_name': TARGET_BUCKET_NAME
         }
