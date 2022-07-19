@@ -4,11 +4,12 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
+AWS_CONN_ID = 'aws_default'
 BUCKET_NAME = 'jungwoohan-temp-source-bucket'
 FILE_NAME = 'temp.csv'
 
 def task_s3_log_load():
-    hook = S3Hook(aws_conn_id='aws_default')
+    hook = S3Hook(aws_conn_id=AWS_CONN_ID)
 
     # Get list of objects on a bucket
     keys = hook.list_keys(BUCKET_NAME)
@@ -21,7 +22,7 @@ def task_s3_log_load():
         print(obj.bucket_name, obj.key)
 
 def download_from_s3(key: str, bucket_name: str, local_path: str) -> str:
-    hook = S3Hook('s3_conn')
+    hook = S3Hook(aws_conn_id=AWS_CONN_ID)
     file_name = hook.download_file(key=key, bucket_name=bucket_name, local_path=local_path)
     return file_name
 
