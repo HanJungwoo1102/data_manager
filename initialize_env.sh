@@ -1,4 +1,3 @@
-sudo -i
 yum update -y
 yum install docker
 wget https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) 
