@@ -34,7 +34,7 @@ def upload_to_s3(filename: str, key: str, bucket_name: str) -> None:
 
 def create_table():
     hook = MySqlHook(mysql_conn_id='mysql_default')
-    hook.run("CREATE DATABASE test_table")
+    hook.run("CREATE TABLE test_table")
 
 with DAG(
     dag_id='main',
