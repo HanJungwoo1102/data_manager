@@ -3,6 +3,7 @@ from datetime import datetime
 from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.providers.mysql.hooks.mysql import MySqlHook
 
 AWS_CONN_ID = 'aws_default'
 SOURCE_BUCKET_NAME = 'jungwoohan-temp-source-bucket'
@@ -31,12 +32,21 @@ def upload_to_s3(filename: str, key: str, bucket_name: str) -> None:
     hook = S3Hook(aws_conn_id=AWS_CONN_ID)
     hook.load_file(filename=filename, key=key, bucket_name=bucket_name)
 
+def create_table():
+    hook = MySqlHook(mysql_conn_id='mysql_default')
+    hook.run("CREATE DATABASE test_table")
+
 with DAG(
     dag_id='main',
     schedule_interval='@daily',
     start_date=datetime(2022, 3, 1),
     catchup=False
 ) as dag:
+    mysql_create_operator = PythonOperator(
+        task_id='create_table',
+        python_callable=create_table,
+    )
+
     # Download a file
     task_download_from_s3 = PythonOperator(
         task_id='download_from_s3',
@@ -68,4 +78,4 @@ with DAG(
         }
     )
 
-    task_download_from_s3 >> task_rename_file >> task_upload_to_s3
+    mysql_create_operator >> task_download_from_s3 >> task_rename_file >> task_upload_to_s3
